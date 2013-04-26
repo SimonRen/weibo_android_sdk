@@ -22,6 +22,8 @@ public class Weibo {
 	public static String redirecturl = "";// 重定向url
 
 	public Oauth2AccessToken accessToken = null;//AccessToken实例
+	
+	public boolean forcelogin = false;
 
 	public static final String KEY_TOKEN = "access_token";
 	public static final String KEY_EXPIRES = "expires_in";
@@ -56,9 +58,11 @@ public class Weibo {
 	 * @param activity 调用认证功能的Context实例
 	 * @param listener WeiboAuthListener 微博认证的回调接口
 	 */
-	public void authorize(Context context, WeiboAuthListener listener) {
+	public void authorize(Context context, WeiboAuthListener listener, boolean _forcelogin) {
 		isWifi=Utility.isWifi(context);
+		forcelogin = _forcelogin;
 		startAuthDialog(context, listener);
+		forcelogin = false;
 	}
 
 	public void startAuthDialog(Context context, final WeiboAuthListener listener) {
@@ -113,6 +117,10 @@ public class Weibo {
 		parameters.add("response_type", "token");
 		parameters.add("redirect_uri", redirecturl);
 		parameters.add("display", "mobile");
+		if (forcelogin)
+		{
+			parameters.add( "forcelogin", "true" );
+		}
 
 		if (accessToken != null && accessToken.isSessionValid()) {
 			parameters.add(KEY_TOKEN, accessToken.getToken());
