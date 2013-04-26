@@ -79,6 +79,6 @@ public class AccountAPI extends WeiboAPI {
 	 */
 	public void endSession(RequestListener listener) {
 		WeiboParameters params = new WeiboParameters();
-		request( SERVER_URL_PRIX + "/end_session.json", params, HTTPMETHOD_POST,listener);
+		request( SERVER_URL_PRIX + "/end_session.json", params, HTTPMETHOD_GET,listener);
 	}
 }
