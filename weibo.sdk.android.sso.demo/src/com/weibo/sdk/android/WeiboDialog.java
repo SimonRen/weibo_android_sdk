@@ -3,9 +3,11 @@ package com.weibo.sdk.android;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -36,6 +38,8 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import com.weibo.sdk.android.demo.R;
+import com.weibo.sdk.android.net.AsyncWeiboRunner;
+import com.weibo.sdk.android.net.RequestListener;
 import com.weibo.sdk.android.util.Utility;
 /**
  * 用来显示用户认证界面的dialog，封装了一个webview，通过redirect地址中的参数来获取accesstoken
@@ -103,6 +107,7 @@ public class WeiboDialog extends Dialog {
 		dismiss();
 	}
 
+	@SuppressLint("SetJavaScriptEnabled")
 	private void setUpWebView() {
 		webViewContainer = new RelativeLayout(getContext());
 		mWebView = new WebView(getContext());
@@ -222,6 +227,7 @@ public class WeiboDialog extends Dialog {
 			mWebView.setVisibility(View.VISIBLE);
 		}
 
+		@SuppressWarnings("unused")
 		public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 			handler.proceed();
 		}
@@ -235,7 +241,51 @@ public class WeiboDialog extends Dialog {
 		String error_code = values.getString("error_code");
 
 		if (error == null && error_code == null) {
-			mListener.onComplete(values);
+			//Log.d("marmalade", "fuckme" );
+			String access_code = values.getString("code");
+			if (access_code != null)
+			{
+				WeiboParameters params = new WeiboParameters();
+				params.add( "client_id", Weibo.app_key );
+				params.add( "client_secret", Weibo.app_secret );
+				params.add( "grant_type", "authorization_code" );
+				params.add( "code", access_code );
+				params.add( "redirect_uri", Weibo.redirecturl );
+				//Log.d( "marmalade", "fetch:: https://api.weibo.com/oauth2/access_token" + Utility.encodeUrl(params) );
+				AsyncWeiboRunner.request("https://api.weibo.com/oauth2/access_token", params, "POST", new RequestListener() {
+					
+					@Override
+					public void onIOException(IOException e) {
+						mListener.onWeiboException(new WeiboException("access_code on_io_error", 0));
+					}
+					
+					@Override
+					public void onError(WeiboException e) {
+						mListener.onWeiboException(e);
+					}
+					
+					@Override
+					public void onComplete(String response) {
+						try {
+							JSONObject jsonValue = new JSONObject( response );
+							Bundle new_values = new Bundle();
+							new_values.putString( "access_token", jsonValue.getString( "access_token" ) );
+							new_values.putString( "expires_in", jsonValue.getString( "expires_in" ) );
+							new_values.putString( "remind_in", jsonValue.getString( "remind_in" ) );
+							new_values.putString( "uid", jsonValue.getString("uid" ) );
+							Log.d("marmalade", "fuckme111" );
+							mListener.onComplete( new_values );
+						} catch (Exception e_get_access_code) {
+							mListener.onWeiboException(new WeiboException("access_code parse json error", 0));
+						}
+					}
+				});
+			}
+			else
+			{
+				//Log.d("marmalade", "fuckme22" );
+				mListener.onComplete(values);
+			}
 		} else if (error.equals("access_denied")) {
 			// 用户或授权服务器拒绝授予数据访问权限
 			mListener.onCancel();

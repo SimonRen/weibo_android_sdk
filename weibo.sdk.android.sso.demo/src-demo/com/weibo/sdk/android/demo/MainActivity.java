@@ -43,14 +43,14 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mWeibo = Weibo.getInstance(CONSUMER_KEY, REDIRECT_URL);
+        mWeibo = Weibo.getInstance(CONSUMER_KEY, "", REDIRECT_URL);
 
         authBtn = (Button) findViewById(R.id.auth);
         authBtn.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                mWeibo.authorize(MainActivity.this, new AuthDialogListener());
+                mWeibo.authorize(MainActivity.this, new AuthDialogListener(), true);
             }
         });
         ssoBtn = (Button) findViewById(R.id.sso);// 触发sso的按钮

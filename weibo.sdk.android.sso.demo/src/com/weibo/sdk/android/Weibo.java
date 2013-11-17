@@ -14,12 +14,13 @@ import android.webkit.CookieSyncManager;
  * @author luopeng (luopeng@staff.sina.com.cn)
  */
 public class Weibo {
-	public static String URL_OAUTH2_ACCESS_AUTHORIZE = "https://open.weibo.cn/oauth2/authorize";
+	public static String URL_OAUTH2_ACCESS_AUTHORIZE = "https://api.weibo.com/oauth2/authorize";
 
 	private static Weibo mWeiboInstance = null;
 
 	public static String app_key = "";//第三方应用的appkey
 	public static String redirecturl = "";// 重定向url
+	public static String app_secret = "";
 
 	public Oauth2AccessToken accessToken = null;//AccessToken实例
 	
@@ -35,11 +36,12 @@ public class Weibo {
 	 * @param redirectUrl 第三方应用的回调页
 	 * @return Weibo的实例
 	 */
-	public synchronized static Weibo getInstance(String appKey, String redirectUrl) {
+	public synchronized static Weibo getInstance(String appKey, String appSecret, String redirectUrl) {
 		if (mWeiboInstance == null) {
 			mWeiboInstance = new Weibo();
 		}
 		app_key = appKey;
+		app_secret = appSecret;
 		Weibo.redirecturl = redirectUrl;
 		return mWeiboInstance;
 	}
@@ -114,7 +116,7 @@ public class Weibo {
 	public void startDialog(Context context, WeiboParameters parameters,
 			final WeiboAuthListener listener) {
 		parameters.add("client_id", app_key);
-		parameters.add("response_type", "token");
+		parameters.add("response_type", "code");
 		parameters.add("redirect_uri", redirecturl);
 		parameters.add("display", "mobile");
 		if (forcelogin)
@@ -122,9 +124,6 @@ public class Weibo {
 			parameters.add( "forcelogin", "true" );
 		}
 
-		if (accessToken != null && accessToken.isSessionValid()) {
-			parameters.add(KEY_TOKEN, accessToken.getToken());
-		}
 		String url = URL_OAUTH2_ACCESS_AUTHORIZE + "?" + Utility.encodeUrl(parameters);
 		if (context.checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
 			Utility.showAlert(context, "Error",
